@@ -92,49 +92,54 @@ export async function getAgent(
   input: string | Record<string, string>,
   agentContext: AgentContext,
 ) {
-  console.log("apiKey", apiKey);
+
   if(!apiKey)
     apiKey = process.env.SKYFIRE_API_KEY || "";
 
-  console.log("apiKey", apiKey);
-  
+  let TESTING = process.env.TEST_MODE === 'true';
+  console.log("TESTING", TESTING, "no rate limiting with Redis");
   // Check Redis connection first
-  console.log("🔍 Checking Redis connection...");
-  const redisStatus = await checkRedisConnection();
-  if (!redisStatus.connected) {
-    const errorMessage = `Redis connection failed: ${redisStatus.error}. The agent cannot run without Redis. Please check your Redis configuration.`;
-    console.log("🚫 " + errorMessage);
-    return JSON.stringify({
-      error: true,
-      message: errorMessage,
-      redisError: true,
-      steps: [],
-      usage: null,
-      agentContext,
-    }, null, 2);
-  }
+  // COMMENT out if you do not want to rate limit usage
+  if (!TESTING) {
+    console.log("🔍 Checking Redis connection...");
+    const redisStatus = await checkRedisConnection();
+    if (!redisStatus.connected) {
+      const errorMessage = `Redis connection failed: ${redisStatus.error}. The agent cannot run without Redis. Please check your Redis configuration.`;
+      console.log("🚫 " + errorMessage);
+      return JSON.stringify({
+        error: true,
+        message: errorMessage,
+        redisError: true,
+        steps: [],
+        usage: null,
+        agentContext,
+      }, null, 2);
+    }
 
-  // Check daily run limit before proceeding
-  console.log("🔍 Checking daily run limit...");
-  const dailyCap = parseInt(process.env.DAILY_RUN_CAP || '250', 10);
-  const limitResult = await checkDailyRunLimit(dailyCap);
-  if (limitResult.limitExceeded) {
-    const errorMessage = `Daily run limit exceeded. Maximum ${dailyCap} runs per day allowed. Please try again tomorrow.`;
-    console.log("🚫 " + errorMessage);
-    return JSON.stringify({
-      error: true,
-      message: errorMessage,
-      dailyCap: dailyCap,
-      currentUsage: limitResult.currentUsage,
-      steps: [],
-      usage: null,
-      agentContext,
-    }, null, 2);
+    // Check daily run limit before proceeding
+    console.log("🔍 Checking daily run limit...");
+    const dailyCap = parseInt(process.env.DAILY_RUN_CAP || '250', 10);
+    const limitResult = await checkDailyRunLimit(dailyCap);
+    if (limitResult.limitExceeded) {
+      const errorMessage = `Daily run limit exceeded. Maximum ${dailyCap} runs per day allowed. Please try again tomorrow.`;
+      console.log("🚫 " + errorMessage);
+      return JSON.stringify({
+        error: true,
+        message: errorMessage,
+        dailyCap: dailyCap,
+        currentUsage: limitResult.currentUsage,
+        steps: [],
+        usage: null,
+        agentContext,
+      }, null, 2);
+    }
+    
+    // Increment daily run counter
+    console.log("📈 Incrementing daily run counter...");
+    await incrementDailyRunCounter();
+  } else {
+    console.log("🧪 TEST_MODE enabled - skipping Redis connection check and rate limiting");
   }
-  
-  // Increment daily run counter
-  console.log("📈 Incrementing daily run counter...");
-  await incrementDailyRunCounter();
   // Always create a fresh agent context for each run
   agentContext = {
     available_mcp_servers: [

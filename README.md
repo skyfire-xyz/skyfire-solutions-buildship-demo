@@ -1,6 +1,7 @@
-# Skyfire E2E App
+# Skyfire x Buildship Company and Competitor Research Agent
 
-This project is a Next.js application designed to demonstrate end-to-end commerce flows using Skyfire technologies. It features an AI agent interface that interacts with services via the Model Context Protocol (MCP) to simulate tasks like data discovery, verification, and purchasing, leveraging the Vercel AI SDK and LangSmith for tracing.
+
+This is an agent capable of conducting company and competitor research. It demonstrates the capability of programatically paying buildship to use its tools in order to complete a research report on a company (in this demo that company being Visa).
 
 ## Prerequisites
 
@@ -12,7 +13,7 @@ This project is a Next.js application designed to demonstrate end-to-end commerc
 1.  Clone the repository:
     ```bash
     git clone <repository-url>
-    cd skyfire-e2e-app
+    cd skyfire-solutions-buildship-demo
     ```
 2.  Install dependencies:
     ```bash
@@ -27,16 +28,14 @@ This project is a Next.js application designed to demonstrate end-to-end commerc
     # Required by AI SDK for the agent model
     OPENAI_API_KEY=your_openai_api_key
 
-    # Required for tracing agent runs
-    LANGSMITH_API_KEY=your_langsmith_api_key
-    # LANGSMITH_PROJECT=your_langsmith_project_name # Optional: Specify a LangSmith project
-
-    # Required by the agent actions (replace with actual URLs)
-    SKYFIRE_MCP_URL=your_skyfire_mcp_server_url
-    CARBONARC_MCP_URL=your_carbonarc_mcp_server_url
+    # Required by AI SDK for the agent model
+    SKYFIRE_MCP_URL=https://mcp.skyfire.xyz/mcp
 
     # Optional - Can be set via UI, but useful as a fallback/default
     # SKYFIRE_API_KEY=your_skyfire_api_key
+
+    # Set test mode to true so doesn't rate limit runs with Redis
+    # TEST_MODE=true
     ```
 
 ## Getting Started
