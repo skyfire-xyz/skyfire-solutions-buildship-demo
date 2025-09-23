@@ -2,11 +2,11 @@
 
 import { openai } from "@ai-sdk/openai";
 import { wrapAISDKModel } from "langsmith/wrappers/vercel";
-import { generateText, experimental_createMCPClient, jsonSchema, type StepResult } from "ai";
+import { generateText, experimental_createMCPClient, type StepResult } from "ai";
 import { AgentContext } from "@/lib/types";
 import { jwtDecode } from "jwt-decode";
 import { OpenAPIToTools } from "./toolConverterUtils";
-import { exportToPdfTool } from "@/lib/exportToPDFTool";
+// import { exportToPdfTool } from "@/lib/exportToPDFTool";
 import {
   connectMcpServerTool,
   convertOpenApiSpecToAgentTool,
@@ -44,6 +44,7 @@ interface ToolResult {
 }
 
 // Use the SDK's types directly - use any to handle dynamic tools
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AIStep = StepResult<any>;
 
 const systemPrompt: string = `
@@ -96,7 +97,7 @@ export async function getAgent(
   if(!apiKey)
     apiKey = process.env.SKYFIRE_API_KEY || "";
 
-  let TESTING = process.env.TEST_MODE === 'true';
+  const TESTING = process.env.TEST_MODE === 'true';
   console.log("TESTING", TESTING, "no rate limiting with Redis");
   // Check Redis connection first
   // COMMENT out if you do not want to rate limit usage
@@ -285,7 +286,7 @@ const getStepDescription = (step: AIStep, toolCall: ToolCall | null) => {
 
 const prepareAllTools = async (agentContext: AgentContext) => {
   let client;
-  // eslint-disable-next-line
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const clients: Record<string, any> = {};
 
   const allServers = [

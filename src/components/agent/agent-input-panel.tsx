@@ -14,7 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { GlowEffect } from "@/components/effects";
+// import { GlowEffect } from "@/components/effects";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 import {
