@@ -50,6 +50,8 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 You can start editing the page by modifying `src/app/page.tsx`. The page auto-updates as you edit the file.
 
+Modify the demo prompt to run the demo for companies other than Visa or use other Buildship tools in src/lib/types.ts
+
 ## Available Scripts
 
 - `yarn dev`: Starts the development server on `localhost:3000`.
