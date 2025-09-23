@@ -474,6 +474,7 @@ const formatOutput = (steps: AIStep[], formattedSteps: FormattedStep[]) => {
           (toolCall.toolName === "create-payment-token" ||
             toolCall.toolName === "create-kya-token" ||
             toolCall.toolName === "create-kya-pay-token" ||
+            toolCall.toolName === "create-kya-payment-token" ||
             toolCall.toolName === "create-account")
         ) {
           try {
