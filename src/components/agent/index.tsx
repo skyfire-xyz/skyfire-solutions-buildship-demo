@@ -33,7 +33,7 @@ export function AgentSandbox() {
   const [timeline, setTimeline] = useState<FormattedStep[]>([]);
   const [outputDrawerOpen, setOutputDrawerOpen] = useState(false);
   const [hasRunOnce, setHasRunOnce] = useState(false);
-  const { apiKey, agentContext, redisConnected, setRedisConnected, redisError, setRedisError } = useApp();
+  const { apiKey, agentContext, setAgentContext, redisConnected, setRedisConnected, redisError, setRedisError } = useApp();
   const stepOffset = useRef(0);
 
   const isMobile = useMediaQuery("(max-width: 768px)");
@@ -100,8 +100,8 @@ export function AgentSandbox() {
             const tomorrow = new Date();
             tomorrow.setDate(tomorrow.getDate() + 1);
             tomorrow.setHours(0, 0, 0, 0);
-            // const timeUntilTomorrow = tomorrow.getTime() - new Date().getTime();
-            // const hoursUntilTomorrow = Math.ceil(timeUntilTomorrow / (1000 * 60 * 60));
+            const timeUntilTomorrow = tomorrow.getTime() - new Date().getTime();
+            const hoursUntilTomorrow = Math.ceil(timeUntilTomorrow / (1000 * 60 * 60));
             
             const formattedMessage = `🚫 Daily run limit reached! Demo has been run ${parsed.dailyCap || 250} times today. Try again tomorrow!`;
             parsed.message = formattedMessage;
@@ -154,7 +154,7 @@ export function AgentSandbox() {
           usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
           error: true,
           message: result || "Unknown error"
-        } as AgentResult);
+        } as any);
       }
 
       setInputHistory((prev) => ({
@@ -177,7 +177,7 @@ export function AgentSandbox() {
         usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
         error: true,
         message: errorMessage
-        } as AgentResult);
+      } as any);
     } finally {
       setLoading(false);
     }

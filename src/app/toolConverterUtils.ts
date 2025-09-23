@@ -4,8 +4,7 @@ import type { OpenAPIV3_1 } from "openapi-types";
 interface ToolDefinition {
   description: string;
   parameters: ReturnType<typeof jsonSchema>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  execute: (args: any) => Promise<any>;
+  execute: (...args: any[]) => Promise<any>;
 }
 
 interface Tools {
@@ -73,7 +72,7 @@ export class OpenAPIToTools {
     const securityRequirements = operation.security || this.spec.security || [];
 
     securityRequirements.forEach(requirement => {
-      Object.entries(requirement).forEach(([schemeName]) => {
+      Object.entries(requirement).forEach(([schemeName, scopes]) => {
         const scheme = this.securitySchemes[schemeName];
 
         if (scheme) {
@@ -112,7 +111,7 @@ export class OpenAPIToTools {
     // Handle both SchemaObject and ReferenceObject
     const schemaObj = paramSchema && '$ref' in paramSchema ? {} : paramSchema as OpenAPIV3_1.SchemaObject;
     
-    const schema: Record<string, unknown> = {
+    const schema: any = {
       type: schemaObj?.type || 'string',
       description: parameter.description || `Parameter ${parameter.name}`,
     };
@@ -143,7 +142,6 @@ export class OpenAPIToTools {
       return null;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const properties: Record<string, any> = {};
     const required: string[] = [];
 
@@ -166,8 +164,7 @@ export class OpenAPIToTools {
       // Add optional properties
       ['format', 'default', 'minimum', 'maximum', 'enum'].forEach(attr => {
         if (attr in propCopy) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (properties[key] as any)[attr] = (propCopy as any)[attr];
+          properties[key][attr] = (propCopy as any)[attr];
         }
       });
     });
@@ -244,7 +241,7 @@ export class OpenAPIToTools {
     parameters: OpenAPIV3_1.ParameterObject[],
     operation: OpenAPIV3_1.OperationObject
   ) {
-    return async (args: Record<string, unknown>) => {
+    return async (args: Record<string, any>) => {
       const toolName = this.generateToolName(path, method, operation);
 
       console.log("\n🔧 ===== OPENAPI TOOL EXECUTION DEBUG =====");
@@ -266,7 +263,7 @@ export class OpenAPIToTools {
 
         // Handle skyfire_kya_pay_token parameter - add to headers
         if (args.skyfire_kya_pay_token) {
-          headers['skyfire_kya_pay_token'] = String(args.skyfire_kya_pay_token);
+          headers['skyfire_kya_pay_token'] = args.skyfire_kya_pay_token;
           console.log(`🔑 Added Skyfire KYA+PAY token to headers`);
         }
 
@@ -305,7 +302,7 @@ export class OpenAPIToTools {
         let body: string | undefined;
         if (['post', 'put', 'patch'].includes(method.toLowerCase())) {
           // Extract request body parameters (exclude path, query, header params and headers)
-          const bodyParams: Record<string, unknown> = {};
+          const bodyParams: Record<string, any> = {};
           const paramNames = parameters.map(p => p.name);
           
           Object.entries(args).forEach(([key, value]) => {
@@ -392,7 +389,6 @@ export class OpenAPIToTools {
     parameters: OpenAPIV3_1.ParameterObject[],
     requestBody?: OpenAPIV3_1.RequestBodyObject
   ) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const properties: Record<string, any> = {};
     const required: string[] = [];
 
@@ -439,8 +435,7 @@ export class OpenAPIToTools {
           // Add optional properties if they exist
           ['format', 'default', 'minimum', 'maximum', 'enum'].forEach(attr => {
             if (attr in propObj) {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              (properties[propName] as any)[attr] = (propObj as any)[attr];
+              properties[propName][attr] = (propObj as any)[attr];
             }
           });
           

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { CoreMessage } from "ai";
+import { CoreMessage, Message } from "ai";
 
 export type AppContextType = {
   apiKey: string;
@@ -119,8 +119,8 @@ export interface FormattedStep {
   step: number;
   text: string;
   tool: string;
-  input: Record<string, unknown>;
-  result: unknown;
+  input: Record<string, any>;
+  result: any;
 }
 
 export const DEMO_PROMPT = "Conduct company and competitor research on Visa and return a report with your findings.";
