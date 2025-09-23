@@ -96,7 +96,7 @@ export async function getAgent(
   if(!apiKey)
     apiKey = process.env.SKYFIRE_API_KEY || "";
 
-  let TESTING = process.env.TEST_MODE === 'true';
+  const TESTING = process.env.TEST_MODE === 'true';
   console.log("TESTING", TESTING, "no rate limiting with Redis");
   // Check Redis connection first
   // COMMENT out if you do not want to rate limit usage

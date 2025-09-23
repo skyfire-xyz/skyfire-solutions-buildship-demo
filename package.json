@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "node .next/standalone/server.js",
+    "start": "next start",
     "lint": "next lint",
     "codebase": "code2prompt $(pwd) --include=\"*.ts,*.tsx,*.js,*.jsx,*.json,*.css,*.scss,*.html,*.md\""
   },
