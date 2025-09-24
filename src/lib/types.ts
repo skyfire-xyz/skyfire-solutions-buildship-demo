@@ -247,7 +247,7 @@ Pass in headers skyfire_kya_pay_token with value as the pay token for openapi to
       "Integrate Data / Update Output (e.g., Presentation)",
       "Report Completion & Results",
     ],
-    averageTime: 80,
+    averageTime: 100,
   },
 ] as const satisfies AgentType[];
 
