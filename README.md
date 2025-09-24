@@ -1,4 +1,4 @@
-# Skyfire x Buildship Company and Competitor Research Agent
+# Skyfire x [Buildship](https://buildship.tools) Company and Competitor Research Agent
 
 
 This is an agent capable of conducting company and competitor research. It demonstrates the capability of programatically paying buildship to use its tools in order to complete a research report on a company (in this demo that company being Visa).
