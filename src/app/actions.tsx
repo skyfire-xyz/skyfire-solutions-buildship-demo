@@ -2,11 +2,10 @@
 
 import { openai } from "@ai-sdk/openai";
 import { wrapAISDKModel } from "langsmith/wrappers/vercel";
-import { generateText, experimental_createMCPClient, jsonSchema, type StepResult } from "ai";
+import { generateText, experimental_createMCPClient, type StepResult } from "ai";
 import { AgentContext } from "@/lib/types";
 import { jwtDecode } from "jwt-decode";
 import { OpenAPIToTools } from "./toolConverterUtils";
-import { exportToPdfTool } from "@/lib/exportToPDFTool";
 import {
   connectMcpServerTool,
   convertOpenApiSpecToAgentTool,
@@ -69,13 +68,13 @@ Pass in headers skyfire_kya_pay_token with value as the pay token for openapi to
 `;
 
 const textConfig: {[key:string]: string} = {
-  "find-seller":
+  "find-sellers":
     "I will use Skyfire's mcp server resources resources/list to find the Buildship seller for the requested data & retrieve the OpenAPI server URL of the seller",
   "create-kya-token":
     "I will use Skyfire's create-kya-token tool to create a KYA token for myself",
   "create-payment-token":
     "I will use Skyfire's create-payment-token tool to create a PAY token for the service which is later used by receiver to claim payment",
-  "create-kya-pay-token":
+  "create-kya-payment-token":
     "I will use Skyfire's create-kya-pay-token tool to create a KYA+PAY token for the service which is later used by receiver to claim payment",
   "execute_companyresearcher_tool":
     "I will use Buildship's Company Researcher tool to get structured company information.",
@@ -284,7 +283,6 @@ const getStepDescription = (step: AIStep, toolCall: ToolCall | null) => {
 };
 
 const prepareAllTools = async (agentContext: AgentContext) => {
-  let client;
   // eslint-disable-next-line
   const clients: Record<string, any> = {};
 
@@ -339,80 +337,50 @@ const prepareAllTools = async (agentContext: AgentContext) => {
       } tools`
     );
     allTools = { ...allTools, ...openApiTools };
-  }
-
-  // Filter servers to only include MCP servers (URLs ending with /mcp), not JSON OpenAPI specs
-  const mcpServers = allServers.filter((server) => {
-    const url = server.url;
-    const isJsonSpec = url.endsWith(".json");
-    const isMcpServer =
-      url.endsWith("/mcp") || url.endsWith("/sse") || (!isJsonSpec && !url.includes(".json"));
-
-    if (isJsonSpec) {
-      console.log(
-        `⚠️  Skipping JSON OpenAPI spec URL (not an MCP server): ${url}`
-      );
-      return false;
     }
-
-    return isMcpServer;
-  });
-
-  console.log(
-    "📡 Filtered MCP Servers:",
-    mcpServers.map((s) => s.url)
-  );
-
-  for (let i: number = 0; i < mcpServers?.length; i++) {
+  
+  //process mcp servers (tools + resources)
+  for (let i = 0; i < allServers?.length; i++) {
+    const server = allServers[i];
     const localVar = "client" + i;
-    client = await experimental_createMCPClient({
-      transport: new StreamableHTTPClientTransport(
-        new URL(mcpServers[i].url!), 
-        {
-          requestInit: {
-            headers: mcpServers[i].headers
-          }
-        }
-      )
-    });
-
-    clients[localVar] = client;
-
-    const toolSet = await client.tools();
-    allTools = { ...allTools, ...toolSet };
 
     try {
-      const transport = new SSEClientTransport(
-        new URL(mcpServers[i].url), 
-        {
-          requestInit: {
-            headers: mcpServers[i].headers
-          }
-        }
-      );
+      // ---- TOOLS CLIENT ----
+      const toolsTransport = makeTransport(server.url, server.headers);
+      const toolClient = await experimental_createMCPClient({ transport: toolsTransport });
+      clients[localVar] = toolClient;
 
+      const toolSet = await toolClient.tools();
+      allTools = { ...allTools, ...toolSet };
+
+      // ---- RESOURCES CLIENT ----
+      const resourceTransport = makeTransport(server.url, server.headers);
       const mcpClient = new Client({
         name: "mcp-client",
         version: "1.0.0",
       });
+      await mcpClient.connect(resourceTransport);
 
-      await mcpClient.connect(transport);
+      const resources = await mcpClient.listResources().catch(() => null);
+      if (!resources?.resources?.length) {
+        console.warn(`${server.url} has no resources (skipping).`);
+        continue;
+      }
 
-      const resources = await mcpClient.listResources();
-      for(let j=0; j<resources.resources.length; j++){
-        const resource = await mcpClient.readResource({
-          uri: resources.resources[j].uri,
-        });
+      for (const res of resources.resources) {
+        const resource = await mcpClient.readResource({ uri: res.uri });
+        console.log(
+          `Resource loaded from ${server.url}:\n`,
+          resource.contents[0].text
+        );
 
         agentContext.conversation_history.push({
           role: "system",
           content: `${resource.contents[0].text}`,
         });
       }
-    }
-    catch (err) {
-      console.log(`There are no resources available in ${mcpServers[i].url}`);
-      console.error(err);
+    } catch (err) {
+      console.error(`Unexpected error accessing resources for ${server.url}:`, err);
     }
   }
 
@@ -437,6 +405,23 @@ const prepareAllTools = async (agentContext: AgentContext) => {
 
   return validTools;
 };
+
+
+
+function makeTransport(url: string, headers: Record<string, string>) {
+  if (url.endsWith("/sse")) {
+    console.log(`Using SSE transport for ${url}`);
+    return new SSEClientTransport(new URL(url), {
+      requestInit: {headers} 
+    });
+  }
+  console.log(`Using Streamable HTTP transport for ${url}`);
+  return new StreamableHTTPClientTransport(new URL(url), {
+    requestInit: { headers },
+  });
+}
+
+
 
 const formatOutput = (steps: AIStep[], formattedSteps: FormattedStep[]) => {
   steps.forEach((step: AIStep) => {

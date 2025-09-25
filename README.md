@@ -38,6 +38,8 @@ This is an agent capable of conducting company and competitor research. It demon
     # TEST_MODE=true
     ```
 
+DAILY_RUN_CAP, RENDER, NODE_ENV, REDIS_URL_PROD, REDIS_URL_LOCAL are all optional env variables that can be used when you deploy this agent to a cloud. We use these variables to cap the amount of live demo runs because we are funding these buyer agents with actual money.
+
 ## Getting Started
 
 Run the development server:
