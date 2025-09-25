@@ -101,7 +101,7 @@ export const exportToPdfTool = {
             metadata: {
               filename: `${filename}.pdf`,
               base64Data: pdfBase64,
-              pageCount: doc.internal.getNumberOfPages(),
+              pageCount: doc.getNumberOfPages(),
               textLength: text.length,
               savedPath: savedPath,
               savedToFile: savedPath !== null
