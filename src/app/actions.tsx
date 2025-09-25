@@ -76,12 +76,10 @@ const textConfig: {[key:string]: string} = {
     "I will use Skyfire's create-payment-token tool to create a PAY token for the service which is later used by receiver to claim payment",
   "create-kya-payment-token":
     "I will use Skyfire's create-kya-pay-token tool to create a KYA+PAY token for the service which is later used by receiver to claim payment",
-  "execute_companyresearcher_tool":
+  "companyresearcher":
     "I will use Buildship's Company Researcher tool to get structured company information.",
-  "execute_researchcompetitors_tool":
+  "researchcompetitors":
     "I will use Buildship's Research Competitors tool to generate a structured competitor analysis",
-  "export-text-to-pdf":
-    "I will export the provided text content to a PDF document with customizable formatting options.",
   "connect-mcp-server-tool": "Installing MCP server",
   "convert-openapi-spec-to-agent-tool": "Converting OpenAPI spec to tools...",
 };
@@ -275,9 +273,6 @@ const getStepDescription = (step: AIStep, toolCall: ToolCall | null) => {
   let text = step.text;
   if (toolCall) {
     text = textConfig[toolCall.toolName] || text;
-    if (toolCall.toolName === "get-pricing") {
-      text = text + toolCall.args["dataset_id"];
-    }
   }
   return text;
 };
@@ -298,37 +293,12 @@ const prepareAllTools = async (agentContext: AgentContext) => {
 
   // Process OpenAPI specs first
   for (let j = 0; j < agentContext.openApiSpecs?.length; j++) {
-    console.log("openAPiSPecs", agentContext.openApiSpecs);
     const postSpec = await fetch(agentContext.openApiSpecs[j].url);
-    console.log("postSpec", postSpec);
     const postSpecResponse = await postSpec.json();
-
-    // Extract operation summaries for tool naming
-    const toolNames: Record<string, string> = {};
-    if (postSpecResponse.paths) {
-      Object.entries(postSpecResponse.paths).forEach(([path, pathItem]) => {
-        if (!pathItem || typeof pathItem !== "object") return;
-        const methods = ["get", "post", "put", "delete", "patch"];
-        methods.forEach((method) => {
-          const operation = (pathItem as Record<string, unknown>)[method];
-          if (
-            operation &&
-            typeof operation === "object" &&
-            "summary" in operation
-          ) {
-            const toolKey = `${method}_${path}`;
-            toolNames[toolKey] = String(operation.summary)
-              .toLowerCase()
-              .replace(/[^a-z0-9]/g, "_");
-          }
-        });
-      });
-    }
 
     const converter = new OpenAPIToTools(
       postSpecResponse,
-      agentContext.openApiSpecs[j].authHeader || "", // Use authHeader if provided, otherwise empty string
-      toolNames
+      agentContext.openApiSpecs[j].authHeader || "" // Use authHeader if provided, otherwise empty string
     );
     const openApiTools = converter.generateTools();
     console.log(
@@ -410,12 +380,10 @@ const prepareAllTools = async (agentContext: AgentContext) => {
 
 function makeTransport(url: string, headers: Record<string, string>) {
   if (url.endsWith("/sse")) {
-    console.log(`Using SSE transport for ${url}`);
     return new SSEClientTransport(new URL(url), {
       requestInit: {headers} 
     });
   }
-  console.log(`Using Streamable HTTP transport for ${url}`);
   return new StreamableHTTPClientTransport(new URL(url), {
     requestInit: { headers },
   });
@@ -459,8 +427,7 @@ const formatOutput = (steps: AIStep[], formattedSteps: FormattedStep[]) => {
           (toolCall.toolName === "create-payment-token" ||
             toolCall.toolName === "create-kya-token" ||
             toolCall.toolName === "create-kya-pay-token" ||
-            toolCall.toolName === "create-kya-payment-token" ||
-            toolCall.toolName === "create-account")
+            toolCall.toolName === "create-kya-payment-token" )
         ) {
           try {
           const { token, jwtDecoded, isValidJWT } = getDecodedJWT(toolResult);
@@ -517,17 +484,14 @@ const checkAndUpdateAgentContextIfConnectionIsInitiated = (
 
         if (toolCallTyped && toolCallTyped.toolName === "convert-openapi-spec-to-agent-tool") {
           const args = toolCallTyped.args as Record<string, unknown>;
-          
-          console.log("🛠️ Openapi Specs:", agentContext.openApiSpecs);
 
-          console.log("🛠️ Adding new one");
           if (!agentContext.openApiSpecs) {
             agentContext.openApiSpecs = [];
           }
           agentContext.openApiSpecs.push({
             url: args["openApiSpecUrl"] as string
           });
-          console.log("🛠️ Openapi Specs After:", agentContext.openApiSpecs);
+          console.log("🛠️ Openapi Specs:", agentContext.openApiSpecs);
           openApiSpecsAdded = true;
           newToolsFound = true;
         }

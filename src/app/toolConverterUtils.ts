@@ -32,12 +32,12 @@ export class OpenAPIToTools {
   private securitySchemes: Record<string, SecurityScheme>;
   private toolNames: Record<string, string>;
 
-  constructor(spec: OpenAPIV3_1.Document, apiKey: string = "", toolNames?: Record<string, string>) {
+  constructor(spec: OpenAPIV3_1.Document, apiKey: string = "") {
     this.spec = spec;
     this.baseUrl = this.getBaseUrl();
     this.apiKey = apiKey;
     this.securitySchemes = this.extractSecuritySchemes();
-    this.toolNames = toolNames || {};
+    this.toolNames = this.extractToolNames();
   }
 
   private getBaseUrl(): string {
@@ -57,6 +57,32 @@ export class OpenAPIToTools {
     }
 
     return schemes;
+  }
+
+  private extractToolNames(): Record<string, string> {
+    const toolNames: Record<string, string> = {};
+    
+    if (this.spec.paths) {
+      Object.entries(this.spec.paths).forEach(([path, pathItem]) => {
+        if (!pathItem || typeof pathItem !== "object") return;
+        const methods = ["get", "post", "put", "delete", "patch"];
+        methods.forEach((method) => {
+          const operation = (pathItem as Record<string, unknown>)[method];
+          if (
+            operation &&
+            typeof operation === "object" &&
+            "summary" in operation
+          ) {
+            const toolKey = `${method}_${path}`;
+            toolNames[toolKey] = String(operation.summary)
+              .toLowerCase()
+              .replace(/[^a-z0-9]/g, "_");
+          }
+        });
+      });
+    }
+
+    return toolNames;
   }
 
   private getSecurityHeaders(operation: OpenAPIV3_1.OperationObject): Record<string, string> {
@@ -244,59 +270,37 @@ export class OpenAPIToTools {
     return async (args: Record<string, any>) => {
       const toolName = this.generateToolName(path, method, operation);
 
-      console.log("\n🔧 ===== OPENAPI TOOL EXECUTION DEBUG =====");
-      console.log(`🏷️  Tool Name: ${toolName}`);
-      console.log(`🌐 Method: ${method.toUpperCase()}`);
-      console.log(`🛤️  Original Path: ${path}`);
-      console.log(`📥 Input Arguments:`, JSON.stringify(args, null, 2));
-
       try {
         let url = this.baseUrl + path;
-        console.log(`🏗️  Base URL: ${this.baseUrl}`);
-        console.log(`🔗 Initial URL: ${url}`);
-
         const queryParams = new URLSearchParams();
 
         // Get security headers based on operation
         const headers = this.getSecurityHeaders(operation);
-        console.log(`🔑 Security Headers:`, JSON.stringify(headers, null, 2));
 
         // Handle skyfire_kya_pay_token parameter - add to headers
         if (args.skyfire_kya_pay_token) {
           headers['skyfire_kya_pay_token'] = args.skyfire_kya_pay_token;
-          console.log(`🔑 Added Skyfire KYA+PAY token to headers`);
         }
 
         // Handle parameters
-        console.log(`⚙️  Processing ${parameters.length} parameters...`);
         parameters.forEach(param => {
           const paramName = param.name;
           const paramIn = param.in;
           
           if (paramName in args) {
-            console.log(`   📌 Parameter: ${paramName} (${paramIn}) = ${args[paramName]}`);
-            
             if (paramIn === 'path') {
-              const oldUrl = url;
               url = url.replace(`{${paramName}}`, String(args[paramName]));
-              console.log(`   🔄 Path param replaced: ${oldUrl} → ${url}`);
             } else if (paramIn === 'query') {
               queryParams.append(paramName, String(args[paramName]));
-              console.log(`   🔍 Query param added: ${paramName}=${args[paramName]}`);
             } else if (paramIn === 'header') {
               headers[paramName] = String(args[paramName]);
-              console.log(`   📋 Header param added: ${paramName}=${args[paramName]}`);
             }
           }
         });
 
         if (queryParams.toString()) {
           url += `?${queryParams.toString()}`;
-          console.log(`🔍 Query string added: ${queryParams.toString()}`);
         }
-
-        console.log(`🎯 Final URL: ${url}`);
-        console.log(`📋 Final Headers:`, JSON.stringify(headers, null, 2));
 
         // Handle request body for POST/PUT/PATCH methods
         let body: string | undefined;
@@ -313,27 +317,14 @@ export class OpenAPIToTools {
           
           if (Object.keys(bodyParams).length > 0) {
             body = JSON.stringify(bodyParams);
-            console.log(`📦 Request Body:`, body);
-          } else {
-            console.log(`📦 Request Body: None (no body parameters provided)`);
           }
-        } else {
-          console.log(`📦 Request Body: None (${method.toUpperCase()} method)`);
         }
-
-        console.log(`🚀 Making ${method.toUpperCase()} request...`);
-        const startTime = Date.now();
 
         const response = await fetch(url, {
           method: method.toUpperCase(),
           headers,
           body,
         });
-
-        const duration = Date.now() - startTime;
-        console.log(`⏱️  Request completed in ${duration}ms`);
-        console.log(`📊 Response Status: ${response.status} ${response.statusText}`);
-        console.log(`📋 Response Headers:`, Object.fromEntries(response.headers.entries()));
 
         if (!response.ok) {
           let errorMessage: string;
@@ -344,23 +335,18 @@ export class OpenAPIToTools {
             errorMessage = response.statusText;
           }
           
-          console.error(`❌ HTTP Error Response:`, errorMessage);
+          console.error(`HTTP error in ${toolName}: ${response.status} - ${errorMessage}`);
           throw new Error(`HTTP error! status: ${response.status}, message: ${errorMessage}`);
         }
 
         const contentType = response.headers.get('content-type');
-        console.log(`📄 Response Content-Type: ${contentType}`);
-
         let responseData;
         if (contentType?.includes('application/json')) {
           responseData = await response.json();
-          console.log(`✅ JSON Response:`, JSON.stringify(responseData, null, 2));
         } else {
           responseData = await response.text();
-          console.log(`✅ Text Response:`, responseData);
         }
 
-        console.log("🔧 ===== OPENAPI TOOL EXECUTION COMPLETE =====\n");
         return {
           content: [
             {
@@ -371,8 +357,7 @@ export class OpenAPIToTools {
         };
 
       } catch (error) {
-        console.error(`💥 Error in tool execution:`, error);
-        console.error(`🔧 ===== OPENAPI TOOL EXECUTION FAILED =====\n`);
+        console.error(`Error in tool execution (${toolName}):`, error);
         return {
           content: [
             {
@@ -447,7 +432,7 @@ export class OpenAPIToTools {
         
         // Special handling for malformed required fields like ["string"]
         if (JSON.stringify(schemaRequired) === JSON.stringify(['string'])) {
-          console.log("Warning: Detected malformed required field ['string'], using property names instead");
+          console.warn("Detected malformed required field ['string'], using property names instead");
           Object.keys(schemaProperties).forEach(propName => {
             if (!required.includes(propName)) {
               required.push(propName);
@@ -457,14 +442,10 @@ export class OpenAPIToTools {
       }
     }
 
-    // Debug logging
-    console.log(`Generated tool schema - properties: ${Object.keys(properties)}`);
-    console.log(`Generated tool schema - required: ${required}`);
-
     // Ensure required list only contains valid property names
     const validRequired = required.filter(req => req in properties);
     if (validRequired.length !== required.length) {
-      console.log(`Warning: Some required fields are not in properties. Required: ${required}, Valid: ${validRequired}`);
+      console.warn(`Some required fields are not in properties. Required: ${required}, Valid: ${validRequired}`);
     }
 
     // Make all properties required
@@ -504,14 +485,7 @@ export class OpenAPIToTools {
         let description = operation.summary || operation.description || `${method.toUpperCase()} ${path}`;
         description += " Requires skyfire_kya_pay_token parameter for authentication.";
 
-        console.log("operation", JSON.stringify(operation));
-        console.log("operation.requestBody", JSON.stringify(operation.requestBody));
-
         const toolSchema = this.convertParametersToJsonSchema(parameters, requestBody as OpenAPIV3_1.RequestBodyObject);
-        
-        // Debug logging for schema validation
-        console.log(`🔍 Tool: ${toolName}`);
-        console.log(`📋 Full schema:`, JSON.stringify(toolSchema, null, 2));
         
         tools[toolName] = {
           description,
@@ -530,14 +504,12 @@ export class OpenAPIToTools {
  * 
  * @param spec OpenAPI specification as a dictionary
  * @param apiKey API key for authentication
- * @param toolNames Optional custom tool names mapping
  * @returns Object containing tool definitions
  */
 export function createOpenApiTools(
   spec: OpenAPIV3_1.Document, 
-  apiKey: string = "", 
-  toolNames?: Record<string, string>
+  apiKey: string = ""
 ): Tools {
-  const converter = new OpenAPIToTools(spec, apiKey, toolNames);
+  const converter = new OpenAPIToTools(spec, apiKey);
   return converter.generateTools();
 }
