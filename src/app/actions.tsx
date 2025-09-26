@@ -70,7 +70,7 @@ Pass in headers skyfire_kya_pay_token with value as the pay token for openapi to
 
 const textConfig: {[key:string]: string} = {
   "find-sellers":
-    "I will use Skyfire's mcp server resources resources/list to find the Buildship seller for the requested data & retrieve the OpenAPI server URL of the seller",
+    "I will use Skyfire's find-sellers tool to find the seller services that I can connect to for company & competitor research",
   "create-kya-token":
     "I will use Skyfire's create-kya-token tool to create a KYA token for myself",
   "create-payment-token":
