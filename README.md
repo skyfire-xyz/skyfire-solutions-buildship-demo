@@ -3,6 +3,12 @@
 
 This is an agent capable of conducting company and competitor research. It demonstrates the capability of programatically paying buildship to use its tools in order to complete a research report on a company (in this demo that company being Visa).
 
+## Live Demo Link
+This demo agent is available [here](https://buildship-demo.skyfire.xyz/).
+
+## Video Walk through
+A video explaining the steps the agent takes [here](https://www.loom.com/share/0e0df95d244c41db8e12db6d8afde94a)
+
 ## Prerequisites
 
 - Node.js (LTS version recommended - specific version not defined in project files)
