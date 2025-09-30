@@ -9,8 +9,8 @@ export function AgentHeader() {
         </div>
         <span className="text-xs text-[#D4D4D8] hidden lg:block">|</span>
         <h1 className="text-xs font-bold tracking-tight inline-flex items-center gap-1">
-          <span className="hidden lg:block">E2E</span>
-          <span className="hidden lg:block">Demo</span>
+          <span className="hidden lg:block">Skyfire</span>
+          <span className="hidden lg:block">Research Agent</span>
         </h1>
       </div>
     </motion.header>

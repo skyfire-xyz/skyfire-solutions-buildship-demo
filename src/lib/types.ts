@@ -174,10 +174,10 @@ export const agentResultSchema = z.object({
 
 export const agentTypes = [
   {
-    name: "Skyfire Commerce Agent",
+    name: "Skyfire Research Agent Built With Vercel AI SDK",
     id: "multi-step-tool-usage",
     description:
-      "An autonomous agent designed for secure B2B data commerce. It discovers data sellers, verifies offerings, handles authentication (including Skyfire KYA tokens), executes payments via Skyfire, retrieves data, and can integrate it into analyses or reports. Leverages MCP for communication.",
+      "An autonomous research agent that pays for data from services on Skyfire to create its research reports. It discovers data sellers, connects to their services, handles authentication (including Skyfire KYA tokens), calls tools, executes payments via Skyfire, retrieves data, and can integrate it into analyses or reports. The agent can connect to MCP servers and read OpenAPI specs to call external tools and services.",
     input: "Detailed problem description in natural language",
     output:
       "Comprehensive solution with step-by-step breakdown, tool usage analysis, and final results",
@@ -221,21 +221,21 @@ Pass in headers skyfire_kya_pay_token with value as the pay token for openapi to
         description: "CarbonArc MCP Server",
       },
     ],
-    capabilities: [
-      "Agent-to-agent commerce",
-      "Data discovery (via Seller API)",
-      "Data purchasing",
-      "Skyfire payment execution (v1 & v2)",
-      "Skyfire KYA token usage (v2+)",
-      "MCP client communication",
-      "Interaction with remote Seller APIs",
-      "Secure file download and extraction",
-      "Data integration into documents/presentations",
-      "Automated multi-step workflow execution",
-      "Credential management (API Keys, potentially username/password, OAuth)",
-      "Transaction tracking",
-      "Account creation via Seller API (v3+)",
-    ],
+    // capabilities: [
+    //   "Agent-to-agent commerce",
+    //   "Data discovery (via Seller API)",
+    //   "Data purchasing",
+    //   "Skyfire payment execution (v1 & v2)",
+    //   "Skyfire KYA token usage (v2+)",
+    //   "MCP client communication",
+    //   "Interaction with remote Seller APIs",
+    //   "Secure file download and extraction",
+    //   "Data integration into documents/presentations",
+    //   "Automated multi-step workflow execution",
+    //   "Credential management (API Keys, potentially username/password, OAuth)",
+    //   "Transaction tracking",
+    //   "Account creation via Seller API (v3+)",
+    // ],
     steps: [
       "Parse Task & Plan Execution",
       "Discover Seller & Service (via Search or Config)",
