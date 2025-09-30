@@ -153,6 +153,28 @@ function LoadingState({
                   </motion.div>
                 )}
 
+                {agent.setup && (
+                  <motion.div
+                    variants={staggerItemVariants}
+                    className="space-y-2"
+                  >
+                    <h4 className="text-xs font-medium text-neutral-500">
+                      Agent Setup
+                    </h4>
+                    <div className="space-y-1">
+                      {agent.setup.map((item, index) => (
+                        <div
+                          key={index}
+                          className="text-xs sm:text-sm text-neutral-600 flex items-center gap-2"
+                        >
+                          <span className="size-1 rounded-full bg-neutral-400" />
+                          <span>{item}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+
                 {agent.capabilities && (
                   <motion.div
                     variants={staggerItemVariants}

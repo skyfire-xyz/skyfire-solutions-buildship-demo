@@ -58,6 +58,7 @@ export interface AgentType {
   routes?: string[];
   workers?: string[];
   phases?: string[];
+  setup?: string[];
   maxIterations?: number;
   averageTime?: number;
   capabilities?: string[];
@@ -194,6 +195,11 @@ export const agentTypes = [
       },
     ],
     resultTabs: ["response", "steps", "tools"],
+    setup: [
+      "AI SDK and MCP Client: Vercel AI SDK",
+      "LLM Provider: OpenAI",
+      "Deployment: Render",
+    ],
     systemPrompt: `<setup>
 You are connected to tools from MCP servers (sse) and hosted OpenAPI specs (jsons)
 and are solving problems step by step. To use an OpenAPI spec can do and convert it to a tool, use the convertOpenApiSpecToAgentTool tool.
