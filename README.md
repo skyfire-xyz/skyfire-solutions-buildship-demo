@@ -7,7 +7,7 @@ This is an agent capable of conducting company and competitor research. It demon
 This demo agent is available [here](https://buildship-demo.skyfire.xyz/).
 
 ## Video Walk through
-A video explaining the steps the agent takes [here](https://www.loom.com/share/0e0df95d244c41db8e12db6d8afde94a)
+A video explaining the steps the agent takes [here](https://youtu.be/ebyz92yNshs)
 
 ## Prerequisites
 
