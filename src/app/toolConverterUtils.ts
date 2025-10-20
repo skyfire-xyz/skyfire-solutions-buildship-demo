@@ -1,5 +1,6 @@
 import { jsonSchema } from "ai";
 import type { OpenAPIV3_1 } from "openapi-types";
+import { logHttpError, logError, getErrorMessage } from "@/lib/errorUtils";
 
 interface ToolDefinition {
   description: string;
@@ -328,14 +329,24 @@ export class OpenAPIToTools {
 
         if (!response.ok) {
           let errorMessage: string;
+          let fullErrorData: any = null;
+          
           try {
             const errorData = await response.json();
+            fullErrorData = errorData;
             errorMessage = errorData.error || response.statusText;
           } catch {
             errorMessage = response.statusText;
           }
           
-          console.error(`HTTP error in ${toolName}: ${response.status} - ${errorMessage}`);
+          // Enhanced error logging with full details
+          logHttpError(`HTTP error in ${toolName}:`, response, {
+            url: url.toString(),
+            method: method.toUpperCase(),
+            headers: headers,
+            body: body
+          }, fullErrorData);
+          
           throw new Error(`HTTP error! status: ${response.status}, message: ${errorMessage}`);
         }
 
@@ -357,12 +368,15 @@ export class OpenAPIToTools {
         };
 
       } catch (error) {
-        console.error(`Error in tool execution (${toolName}):`, error);
+        logError(`Error in tool execution (${toolName}):`, error, 'toolExecution', {
+          toolName: toolName
+        });
+        
         return {
           content: [
             {
               type: "text",
-              text: `Error: ${error instanceof Error ? error.message : 'An unknown error occurred'}`,
+              text: `Error: ${getErrorMessage(error)}`,
             },
           ],
         };

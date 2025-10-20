@@ -15,6 +15,7 @@ import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { isJWT } from "@/lib/utils";
 import { checkDailyRunLimit, incrementDailyRunCounter, checkRedisConnection } from "../lib/redis";
+import { logError, safeStringify } from "@/lib/errorUtils";
 
 const vercelModel = openai("gpt-4o", { structuredOutputs: true });
 const modelWithTracing = wrapAISDKModel(vercelModel);
@@ -351,7 +352,9 @@ const prepareAllTools = async (agentContext: AgentContext) => {
         });
       }
     } catch (err) {
-      console.error(`Unexpected error accessing resources for ${server.url}:`, err);
+      logError(`Unexpected error accessing resources for ${server.url}:`, err, 'resourceAccess', {
+        serverUrl: server.url
+      });
     }
   }
 
@@ -403,14 +406,23 @@ const formatOutput = (steps: AIStep[], formattedSteps: FormattedStep[]) => {
         console.log("🔧 TOOL CALL:", {
           toolName: toolCall?.toolName || "unknown",
           args: toolCall?.args || {},
-          result: toolResult
+          result: toolResult ? safeStringify(toolResult) : null
         });
         
         // Print detailed tool result content
         if (toolResult?.result?.content) {
           console.log("📤 TOOL OUTPUT CONTENT:");
           toolResult.result.content.forEach((contentItem, index) => {
-            console.log(`  Content ${index + 1} (${contentItem.type}):`, contentItem.text);
+            const contentText = typeof contentItem.text === 'string' 
+              ? contentItem.text 
+              : safeStringify(contentItem.text);
+            console.log(`  Content ${index + 1} (${contentItem.type}):`, contentText);
+            
+            // Special handling for error content to show full details
+            if (contentItem.type === 'text' && contentItem.text && 
+                (contentItem.text.includes('HTTP error') || contentItem.text.includes('Error:'))) {
+              console.log(`  🚨 ERROR DETAILS (${contentItem.type}):`, contentText);
+            }
           });
         }
         
@@ -437,7 +449,7 @@ const formatOutput = (steps: AIStep[], formattedSteps: FormattedStep[]) => {
           }
           }
           catch (err){
-            console.error("Error while decoding JWT token: ", err);
+            logError("Error while decoding JWT token: ", err, 'jwtDecoding');
           }
         }
 

@@ -15,6 +15,7 @@ import { getAgent } from "@/app/actions";
 import { useApp } from "@/context/app-provider";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { agentTypes, examplePrompts, AgentResult, ExamplePrompt, DEMO_PROMPT, FormattedStep } from "@/lib/types";
+import { logError } from "@/lib/errorUtils";
 
 export function AgentSandbox() {
   const [inputs, setInputs] = useState<Record<string, string>>({
@@ -134,7 +135,9 @@ export function AgentSandbox() {
           // Reset to demo prompt for next run
           setInputs({ prompt: DEMO_PROMPT });
         } catch (parseError) {
-          console.error('JSON parse error:', parseError);
+          logError('JSON parse error:', parseError, 'jsonParse', {
+            rawResult: result
+          });
           setParsedOutput({
             text: result || "Parse error occurred",
             steps: [],
@@ -162,7 +165,7 @@ export function AgentSandbox() {
         [selectedAgent]: [JSON.stringify({ prompt }), ...(prev[selectedAgent] || [])],
       }));
     } catch (err) {
-      console.error('Error in runWithPrompt:', err);
+      logError('Error in runWithPrompt:', err, 'runWithPrompt');
       const errorMessage = err instanceof Error ? err.message : String(err) || 'Unknown error occurred';
       
       // Only show toast for actual errors, not for expected daily limit responses
