@@ -64,6 +64,7 @@ You can execute multiple convert-openapi-spec-to-agent-tool calls in sequence, b
 </terminate>
 
 Make sure to create and pass a token with proper balance before using external services. You may need to re create tokens as you call services again.
+Call all the necessary services you need to accomplish the request step by step (you will likely need to call multiple).
 Pay attention to the amount the service costs before creating tokens to make sure they contain the proper amount and not more or less.
 
 Pass in headers skyfire_kya_pay_token with value as the pay token for openapi tool calls.
