@@ -153,61 +153,6 @@ export class OpenAPIToTools {
     return schema;
   }
 
-  private convertRequestBodyToJsonSchema(requestBody: OpenAPIV3_1.RequestBodyObject) {
-    const content = requestBody.content || {};
-    const jsonContent = content['application/json'];
-
-    if (!jsonContent) {
-      return null;
-    }
-
-    const schema = jsonContent.schema;
-    // Handle both SchemaObject and ReferenceObject
-    const schemaObj = schema && '$ref' in schema ? {} : schema as OpenAPIV3_1.SchemaObject;
-    
-    if (!schemaObj || schemaObj.type !== 'object') {
-      return null;
-    }
-
-    const properties: Record<string, any> = {};
-    const required: string[] = [];
-
-    // Convert schema properties
-    Object.entries(schemaObj.properties || {}).forEach(([key, prop]) => {
-      // Handle both SchemaObject and ReferenceObject for properties
-      const propObj = prop && '$ref' in prop ? {} : prop as OpenAPIV3_1.SchemaObject;
-      
-      // Remove nested properties if empty and copy other properties
-      const propCopy = { ...propObj };
-      if (propCopy.properties && Object.keys(propCopy.properties).length === 0) {
-        delete propCopy.properties;
-      }
-
-      properties[key] = {
-        type: propCopy.type || 'string',
-        description: propCopy.title || propCopy.description || `Property ${key}`,
-      };
-
-      // Add optional properties
-      ['format', 'default', 'minimum', 'maximum', 'enum'].forEach(attr => {
-        if (attr in propCopy) {
-          properties[key][attr] = (propCopy as any)[attr];
-        }
-      });
-    });
-
-    // Add required fields
-    if (schemaObj.required) {
-      required.push(...schemaObj.required);
-    }
-
-    return {
-      type: 'object',
-      properties,
-      required: required.length > 0 ? required : undefined,
-      additionalProperties: false,
-    };
-  }
 
   private generateToolName(path: string, method: string, operation: OpenAPIV3_1.OperationObject): string {
     // Check for pre-extracted tool names first
