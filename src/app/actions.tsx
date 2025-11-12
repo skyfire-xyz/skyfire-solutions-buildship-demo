@@ -55,19 +55,22 @@ Make sure to inlcude the openapi.json at the end of urls
 
 <procedures>
 Remember to use only the create-kya-pay-token tool from skyfire before using an external service tool call
+After find-sellers tool make sure to do a thinking step where you indicate which tools you will use to accomplish this task.
 </procedures>
 
- MCP servers have /mcp or /sse at the end, if it's a json then you would connect via the OpenAPI tool.
+MCP servers have /mcp or /sse at the end, if it's a json then you would connect via the OpenAPI tool.
 <terminate>
 When connect-mcp-server-tool tool is executed, stop the processing immediately.
 You can execute multiple convert-openapi-spec-to-agent-tool calls in sequence, but after all OpenAPI conversions are complete, stop processing.
 </terminate>
 
+<remember>
 Make sure to create and pass a token with proper balance before using external services. You may need to re create tokens as you call services again.
-Call all the necessary services you need to accomplish the request step by step (you will likely need to call multiple).
 Pay attention to the amount the service costs before creating tokens to make sure they contain the proper amount and not more or less.
-
-Pass in headers skyfire_kya_pay_token with value as the pay token for openapi tool calls.
+Create the kya+pay token before you use the convert-openapi-spec-to-agent-tool.
+Pass in headers skyfire_kya_pay_token with value as the pay token for the paid tool calls.
+Remember after find-sellers tool make sure to do a thinking step where you indicate which tools you will use to accomplish this task.
+</remember>
 `;
 
 const textConfig: {[key:string]: string} = {
