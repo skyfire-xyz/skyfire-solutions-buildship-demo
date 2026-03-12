@@ -339,7 +339,7 @@ export class OpenAPIToTools {
     // Add skyfire_kya_pay_token parameter for authentication
     properties['skyfire_kya_pay_token'] = {
       type: 'string',
-      description: 'Skyfire KYA+PAY token for authentication'
+      description: 'Skyfire KYA-PAY token for authentication'
     };
 
     // Add path, query, and header parameters
