@@ -67,7 +67,7 @@ You can execute multiple convert-openapi-spec-to-agent-tool calls in sequence, b
 <remember>
 Make sure to create and pass a token with proper balance before using external services. You may need to re create tokens as you call services again.
 Pay attention to the amount the service costs before creating tokens to make sure they contain the proper amount and not more or less.
-Create the kya+pay token before you use the convert-openapi-spec-to-agent-tool.
+Create the kya-pay token before you use the convert-openapi-spec-to-agent-tool.
 Pass in headers skyfire_kya_pay_token with value as the pay token for the paid tool calls.
 Remember after find-sellers tool make sure to do a thinking step where you indicate which tools you will use to accomplish this task.
 </remember>
@@ -81,7 +81,7 @@ const textConfig: {[key:string]: string} = {
   "create-payment-token":
     "I will use Skyfire's create-payment-token tool to create a PAY token for the service which is later used by receiver to claim payment",
   "create-kya-payment-token":
-    "I will use Skyfire's create-kya-pay-token tool to create a KYA+PAY token for the service which is later used by receiver to claim payment",
+    "I will use Skyfire's create-kya-pay-token tool to create a KYA-PAY token for the service which is later used by receiver to claim payment",
   "companyresearcher":
     "I will use Buildship's Company Researcher tool to get structured company information.",
   "researchcompetitors":
