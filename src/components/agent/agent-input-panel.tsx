@@ -14,7 +14,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { GlowEffect } from "@/components/effects";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 import {
@@ -332,7 +331,7 @@ function ExampleButtons({
                         },
                       }}
                       whileTap={{ scale: 0.9 }}
-                      className="absolute right-1.5 top-1 -translate-y-1/2 p-0.5 rounded-full bg-white/20 hover:bg-white/30 transition-colors duration-200 cursor-pointer backdrop-blur-[2px] shadow-[0px_1px_1px_0px_rgba(0,_0,_0,_0.2)]"
+                      className="absolute right-1.5 top-1 p-0.5 rounded-full bg-white/20 hover:bg-white/30 transition-colors duration-200 cursor-pointer backdrop-blur-[2px] shadow-[0px_1px_1px_0px_rgba(0,_0,_0,_0.2)]"
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
