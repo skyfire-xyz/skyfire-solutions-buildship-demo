@@ -73,6 +73,8 @@ Pay attention to the amount the service costs before creating tokens to make sur
 Create the kya-pay token before you use the convert-openapi-spec-to-agent-tool.
 Pass in headers skyfire_kya_pay_token with value as the pay token for the paid tool calls.
 Remember after find-sellers tool make sure to do a thinking step where you indicate which tools you will use to accomplish this task.
+
+Default to using buildship to complete the tasks requested of you.
 </remember>
 `;
 
