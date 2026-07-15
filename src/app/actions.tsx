@@ -465,7 +465,12 @@ const formatOutput = (steps: AIStep[], formattedSteps: FormattedStep[]) => {
           tool:
             toolCall && toolCall.toolName ? toolCall.toolName : "thinking",
           input: toolCall ? toolCall.input : {},
-          result: toolResult,
+          // AI SDK v5+ moved the call args to toolCall.input; the UI renders
+          // step.result.args as the "Request", so re-assemble the legacy
+          // `{ args, result }` shape (the v7 migration only kept `result`).
+          result: toolResult
+            ? { args: toolCall?.input ?? {}, result: toolResult.result }
+            : null,
         });
 
         if (
