@@ -4,7 +4,7 @@ import { logHttpError, logError, getErrorMessage } from "@/lib/errorUtils";
 
 interface ToolDefinition {
   description: string;
-  parameters: ReturnType<typeof jsonSchema>;
+  inputSchema: ReturnType<typeof jsonSchema>;
   execute: (...args: any[]) => Promise<any>;
 }
 
@@ -448,7 +448,7 @@ export class OpenAPIToTools {
         
         tools[toolName] = {
           description,
-          parameters: toolSchema,
+          inputSchema: toolSchema,
           execute: this.createExecuteFunction(path, method, parameters, operation),
         };
       });

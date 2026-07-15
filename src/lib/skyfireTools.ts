@@ -3,7 +3,7 @@ import { jsonSchema } from "ai";
 export const connectMcpServerTool = {
     "connect-mcp-server-tool": {
       description: "Connects to the seller MCP server sse URL.",
-      parameters: jsonSchema({
+      inputSchema: jsonSchema({
         type: "object",
         properties: {
           mcpServerUrl: {
@@ -34,7 +34,7 @@ export const connectMcpServerTool = {
 export const convertOpenApiSpecToAgentTool = {
     "convert-openapi-spec-to-agent-tool": {
         description: "Gets the OpenAPI spec URL prompted by the user. Stop execution after this tool",
-        parameters: jsonSchema({
+        inputSchema: jsonSchema({
         type: "object",
         properties: {
             openApiSpecUrl: {
