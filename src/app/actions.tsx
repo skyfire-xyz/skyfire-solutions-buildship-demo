@@ -1,8 +1,8 @@
 "use server";
 
 import { openai } from "@ai-sdk/openai";
-import { wrapAISDKModel } from "langsmith/wrappers/vercel";
-import { generateText, experimental_createMCPClient, type StepResult } from "ai";
+import { generateText, stepCountIs, type StepResult, type ToolSet } from "ai";
+import { experimental_createMCPClient } from "@ai-sdk/mcp";
 import { AgentContext } from "@/lib/types";
 import { jwtDecode } from "jwt-decode";
 import { OpenAPIToTools } from "./toolConverterUtils";
@@ -17,8 +17,11 @@ import { isJWT } from "@/lib/utils";
 import { checkDailyRunLimit, incrementDailyRunCounter, checkRedisConnection } from "../lib/redis";
 import { logError, safeStringify } from "@/lib/errorUtils";
 
-const vercelModel = openai("gpt-4o", { structuredOutputs: true });
-const modelWithTracing = wrapAISDKModel(vercelModel);
+// LangSmith's model-wrapper API (wrapAISDKModel) was removed in langsmith >=0.8;
+// no LangSmith credentials are configured, so the model is used directly.
+// gpt-5.4 (matching the other Skyfire demos) — gpt-4o on the @ai-sdk/openai v4
+// Responses API spuriously rejects the full toolset with "context_length_exceeded".
+const modelWithTracing = openai("gpt-5.4");
 
 interface FormattedStep {
   step: number;
@@ -32,7 +35,7 @@ interface ToolCall {
     type: string;
     toolCallId: string;
     toolName: string;
-    args: {
+    input: {
       [key: string]: string;
     }
 }
@@ -43,8 +46,8 @@ interface ToolResult {
     }
 }
 
-// Use the SDK's types directly - use any to handle dynamic tools
-type AIStep = StepResult<any>;
+// Use the SDK's types directly
+type AIStep = StepResult<ToolSet>;
 
 const systemPrompt: string = `
 <setup>
@@ -191,6 +194,18 @@ async function runAgent(
     content: input,
   });
 
+  // AI SDK v5+ no longer accepts `system`-role entries inside `messages`; they
+  // must be supplied via the top-level `system` option. The agent accumulates
+  // system entries (base instructions, MCP resource docs, "now connected"
+  // notices) in conversation_history, so split them out at this boundary.
+  const combinedSystemPrompt = agentContext.conversation_history
+    .filter((m) => m.role === "system")
+    .map((m) => (typeof m.content === "string" ? m.content : ""))
+    .join("\n\n");
+  const nonSystemMessages = agentContext.conversation_history.filter(
+    (m) => m.role !== "system",
+  );
+
   // Run agent by passing all the prepared tools and agentContext
   console.log("🔄 EXECUTING AGENT...");
   const {
@@ -200,10 +215,11 @@ async function runAgent(
     response,
   } = await generateText({
     model: modelWithTracing,
-    maxTokens: 5000,
+    system: combinedSystemPrompt,
+    maxOutputTokens: 8000,
     tools: allTools,
-    maxSteps: 20,
-    messages: agentContext.conversation_history,
+    stopWhen: stepCountIs(20),
+    messages: nonSystemMessages,
   });
   
   console.log("✅ AGENT EXECUTION COMPLETE");
@@ -236,11 +252,17 @@ async function runAgent(
   }
 
   // Return final response
+  // AI SDK v5+ renamed usage fields (inputTokens/outputTokens); the UI still
+  // reads the legacy promptTokens/completionTokens shape, so map back here.
   return JSON.stringify(
     {
       answer,
       steps: formattedSteps,
-      usage,
+      usage: {
+        promptTokens: usage.inputTokens ?? 0,
+        completionTokens: usage.outputTokens ?? 0,
+        totalTokens: usage.totalTokens ?? 0,
+      },
       agentContext,
     },
     null,
@@ -404,12 +426,19 @@ const formatOutput = (steps: AIStep[], formattedSteps: FormattedStep[]) => {
     if (step.toolCalls.length > 0)  {
       for (let i = 0; i < step.toolCalls.length; i++) {
         const toolCall = step.toolCalls[i] as unknown as ToolCall;
-        const toolResult = step.toolResults[i] as unknown as ToolResult;
-        
+        // AI SDK v5+ exposes the tool result payload on `.output` (was `.result`).
+        // Normalize to the legacy `{ result: { content } }` shape used below.
+        const rawToolResult = step.toolResults[i] as unknown as {
+          output?: { content: Array<{ type: string; text: string }> };
+        };
+        const toolResult: ToolResult | null = rawToolResult?.output
+          ? { result: rawToolResult.output }
+          : null;
+
         // Print tool outputs to console
         console.log("🔧 TOOL CALL:", {
           toolName: toolCall?.toolName || "unknown",
-          args: toolCall?.args || {},
+          args: toolCall?.input || {},
           result: toolResult ? safeStringify(toolResult) : null
         });
         
@@ -435,12 +464,13 @@ const formatOutput = (steps: AIStep[], formattedSteps: FormattedStep[]) => {
           text: getStepDescription(step, toolCall),
           tool:
             toolCall && toolCall.toolName ? toolCall.toolName : "thinking",
-          input: toolCall ? toolCall.args : {},
+          input: toolCall ? toolCall.input : {},
           result: toolResult,
         });
 
-        if ( 
+        if (
           toolCall &&
+          toolResult &&
           (toolCall.toolName === "create-payment-token" ||
             toolCall.toolName === "create-kya-token" ||
             toolCall.toolName === "create-kya-pay-token" ||
@@ -492,7 +522,7 @@ const checkAndUpdateAgentContextIfConnectionIsInitiated = (
         const toolCallTyped = toolCall as unknown as ToolCall;
 
         if (toolCallTyped && toolCallTyped.toolName === "connect-mcp-server-tool") {
-          const url = toolCallTyped.args["mcpServerUrl"];
+          const url = toolCallTyped.input["mcpServerUrl"];
 
           agentContext.dynamically_mounted_server = [{ url: url, headers: {} }];
           mcpServerConnected = true;
@@ -500,7 +530,7 @@ const checkAndUpdateAgentContextIfConnectionIsInitiated = (
         }
 
         if (toolCallTyped && toolCallTyped.toolName === "convert-openapi-spec-to-agent-tool") {
-          const args = toolCallTyped.args as Record<string, unknown>;
+          const args = toolCallTyped.input as Record<string, unknown>;
 
           if (!agentContext.openApiSpecs) {
             agentContext.openApiSpecs = [];
