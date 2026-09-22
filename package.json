@@ -12,7 +12,7 @@
   "dependencies": {
     "@ai-sdk/mcp": "2.0.13",
     "@ai-sdk/openai": "4.0.14",
-    "@modelcontextprotocol/sdk": "1.12.1",
+    "@modelcontextprotocol/sdk": "1.26.0",
     "@number-flow/react": "0.5.9",
     "@radix-ui/react-alert-dialog": "1.1.10",
     "@radix-ui/react-dialog": "1.1.10",
