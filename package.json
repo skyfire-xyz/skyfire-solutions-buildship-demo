@@ -6,13 +6,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "codebase": "code2prompt $(pwd) --include=\"*.ts,*.tsx,*.js,*.jsx,*.json,*.css,*.scss,*.html,*.md\""
   },
   "dependencies": {
     "@ai-sdk/mcp": "2.0.13",
     "@ai-sdk/openai": "4.0.14",
-    "@modelcontextprotocol/sdk": "1.12.1",
+    "@modelcontextprotocol/sdk": "1.32.0",
     "@number-flow/react": "0.5.9",
     "@radix-ui/react-alert-dialog": "1.1.10",
     "@radix-ui/react-dialog": "1.1.10",
@@ -34,30 +34,32 @@
     "langsmith": "0.8.2",
     "lucide-react": "0.501.0",
     "motion": "12.7.4",
-    "next": "15.5.28",
+    "next": "16.4.5",
     "next-themes": "0.4.6",
     "openapi-types": "12.1.3",
     "react": "19.0.0",
     "react-dom": "19.0.0",
     "react-markdown": "10.1.0",
-    "react-use": "17.6.0",
+    "react-use": "17.6.1",
     "sonner": "2.0.3",
     "tailwind-merge": "3.2.0",
     "unified": "11.0.5",
     "vaul": "1.1.2",
-    "zod": "4.6.6"
+    "zod": "4.6.7"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "3.0.0",
     "@tailwindcss/postcss": "4.2.4",
     "@types/d3-scale": "4.0.9",
     "@types/node": "20.0.0",
     "@types/react": "19.0.0",
     "@types/react-dom": "19.0.0",
-    "eslint": "9.0.0",
-    "eslint-config-next": "15.3.1",
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.4.5",
     "tailwindcss": "4.2.4",
     "tw-animate-css": "1.2.5",
     "typescript": "6.0.3"
+  },
+  "resolutions": {
+    "**/@typescript-eslint/typescript-estree/minimatch": "11.0.4"
   }
 }

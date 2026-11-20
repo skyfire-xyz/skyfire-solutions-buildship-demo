@@ -361,23 +361,31 @@ const prepareAllTools = async (agentContext: AgentContext) => {
       });
       await mcpClient.connect(resourceTransport);
 
-      const resources = await mcpClient.listResources().catch(() => null);
-      if (!resources?.resources?.length) {
-        console.warn(`${server.url} has no resources (skipping).`);
-        continue;
-      }
+      try {
+        const resources = await mcpClient.listResources().catch(() => null);
+        if (!resources?.resources?.length) {
+          console.warn(`${server.url} has no resources (skipping).`);
+          continue;
+        }
 
-      for (const res of resources.resources) {
-        const resource = await mcpClient.readResource({ uri: res.uri });
-        console.log(
-          `Resource loaded from ${server.url}:\n`,
-          resource.contents[0].text
-        );
+        for (const res of resources.resources) {
+          const resource = await mcpClient.readResource({ uri: res.uri });
+          const text = resource.contents
+            .flatMap((content) => ("text" in content ? [content.text] : []))
+            .join("\n");
+          if (!text) {
+            continue;
+          }
 
-        agentContext.conversation_history.push({
-          role: "system",
-          content: `${resource.contents[0].text}`,
-        });
+          console.log(`Resource loaded from ${server.url}:\n`, text);
+
+          agentContext.conversation_history.push({
+            role: "system",
+            content: text,
+          });
+        }
+      } finally {
+        await mcpClient.close();
       }
     } catch (err) {
       logError(`Unexpected error accessing resources for ${server.url}:`, err, 'resourceAccess', {
